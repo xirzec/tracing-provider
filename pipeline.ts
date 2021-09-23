@@ -1,7 +1,18 @@
-export interface RequestOptions {
-  url: string;
+import { OperationTracingOptions, TracingProvider } from "./coreTracing";
 
+export interface Request {
+  url: string;
+  options: OperationOptions;
 }
-export async function makeRequest(options: RequestOptions): Promise<void> {
-  console.log(`Making request to ${options.url}`);
+
+export interface OperationOptions {
+  tracingOptions?: OperationTracingOptions;
+}
+
+export interface ClientOptions {
+  tracingProvider?: TracingProvider;
+}
+
+export async function makeRequest(request: Request): Promise<void> {
+  console.log(`Making request to ${request.url}`);
 }
