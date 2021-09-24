@@ -1,4 +1,10 @@
-import { TracingProvider, TracingProviderCreateSpanOptions, TracingSpan } from "./coreTracing";
+import {
+  TracingProvider,
+  TracingProviderCreateSpanOptions,
+  TracingSpan,
+  wrapProviderContext,
+  TracingContext,
+} from "./coreTracing";
 import { Context, context as otContext, Span, SpanStatusCode, trace } from "@opentelemetry/api";
 
 function getErrorMessage(error: Error | string): string {
@@ -54,4 +60,8 @@ class OpenTelemetryProvider implements TracingProvider {
 
 export function createOpenTelemetryProvider(): TracingProvider {
   return new OpenTelemetryProvider();
+}
+
+export function fromProviderContext(context: Context): TracingContext {
+  return wrapProviderContext(context);
 }

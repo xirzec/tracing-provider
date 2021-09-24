@@ -1,17 +1,22 @@
 import { context, SpanStatusCode, trace, Tracer } from "@opentelemetry/api";
+import { createOpenTelemetryProvider, fromProviderContext } from "./openTelemetryProvider";
 import { ExampleClient } from "./exampleClient";
 
 export async function doClientTracing(tracer: Tracer) {
   const span = tracer.startSpan("Root span for client operations");
   const rootContext = trace.setSpan(context.active(), span);
 
-  const client = new ExampleClient();
-  context.with(rootContext, async () => {
+  const otProvider = createOpenTelemetryProvider();
+  const client = new ExampleClient({ tracingProvider: otProvider });
+  await context.with(rootContext, async () => {
     client.someClientOperation();
+    client.someOtherClientOperation();
   });
-  // pass parent manually?
-  client.someClientOperation();
-  
-  span.setStatus({code: SpanStatusCode.OK});
+  // pass parent manually
+  const parentContext = fromProviderContext(rootContext);
+  await client.someClientOperation({ tracingOptions: { context: parentContext } });
+  await client.someOtherClientOperation({ tracingOptions: { context: parentContext } });
+
+  span.setStatus({ code: SpanStatusCode.OK });
   span.end();
 }

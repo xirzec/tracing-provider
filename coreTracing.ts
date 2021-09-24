@@ -273,3 +273,7 @@ class TracingClientImpl implements TracingClient {
 export function createTracingClient(config: TracingClientConfig): TracingClient {
   return new TracingClientImpl(config);
 }
+
+export function wrapProviderContext(context: unknown): TracingContext {
+  return createContext({ providerContext: context });
+}
