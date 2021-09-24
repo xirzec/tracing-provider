@@ -40,6 +40,10 @@ function getProviderContext(context: TracingContext): unknown {
   return context.getValue(providerContextKey);
 }
 
+function getTracingClient(context: TracingContext): unknown {
+  return context.getValue(clientKey);
+}
+
 interface CreateContextOptions {
   span?: TracingSpan;
   client?: TracingClient;
@@ -112,6 +116,7 @@ export interface TracingClient {
     options?: {
       operationOptions?: T;
       spanOptions?: TracingSpanOptions;
+      ignorePackagePrefix?: boolean;
     }
   ): { span: TracingSpan; updatedOptions: T };
   withWrappedSpan<
@@ -123,6 +128,7 @@ export interface TracingClient {
     options?: {
       operationOptions?: T;
       spanOptions?: TracingSpanOptions;
+      ignorePackagePrefix?: boolean;
     }
   ): Promise<ReturnType<Callback>>;
   withContext<
@@ -182,11 +188,13 @@ class TracingClientImpl implements TracingClient {
     options?: {
       operationOptions?: T;
       spanOptions?: TracingSpanOptions;
+      ignorePackagePrefix?: boolean;
     }
   ): { context: TracingContext; span: TracingSpan; updatedOptions: T } {
-    const spanName = this._packagePrefix
-      ? `${this._packagePrefix}.${operationName}`
-      : operationName;
+    const spanName =
+      this._packagePrefix && !options?.ignorePackagePrefix
+        ? `${this._packagePrefix}.${operationName}`
+        : operationName;
     const mergedOptions: TracingSpanOptions = {
       ...options?.spanOptions,
       ...options?.operationOptions?.tracingOptions,
@@ -237,6 +245,7 @@ class TracingClientImpl implements TracingClient {
     options?: {
       operationOptions?: T;
       spanOptions?: TracingSpanOptions;
+      ignorePackagePrefix?: boolean;
     }
   ): Promise<ReturnType<Callback>> {
     const { context, span, updatedOptions } = this.createSpan(operationName, options);
@@ -272,6 +281,12 @@ class TracingClientImpl implements TracingClient {
 
 export function createTracingClient(config: TracingClientConfig): TracingClient {
   return new TracingClientImpl(config);
+}
+
+export function getTracingClientFromContext(context?: TracingContext): TracingClient | undefined {
+  if (context) {
+    return getTracingClient(context) as TracingClient | undefined;
+  }
 }
 
 export function wrapProviderContext(context: unknown): TracingContext {
