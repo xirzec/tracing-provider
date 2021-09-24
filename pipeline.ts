@@ -2,7 +2,7 @@ import { OperationTracingOptions, TracingProvider } from "./coreTracing";
 
 export interface Request {
   url: string;
-  options: OperationOptions;
+  options?: OperationOptions;
 }
 
 export interface OperationOptions {

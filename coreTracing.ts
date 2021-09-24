@@ -69,9 +69,14 @@ function createContext(options?: CreateContextOptions): TracingContext {
   return new TracingContextImpl(newContextMap);
 }
 
+export interface TracingProviderCreateSpanOptions {
+  name: string;
+  context?: unknown;
+  // kind, links?
+}
+
 export interface TracingProvider {
-  createSpan(options: TracingSpanOptions): TracingSpan;
-  createContext(span: TracingSpan): unknown;
+  createSpan(options: TracingProviderCreateSpanOptions): { span: TracingSpan; context: unknown };
   withContext<
     CallbackArgs extends unknown[],
     Callback extends (...args: CallbackArgs) => ReturnType<Callback>
@@ -145,11 +150,8 @@ const DoNothingSpan: TracingSpan = {
 };
 
 const DoNothingTracingProvider: TracingProvider = {
-  createSpan(): TracingSpan {
-    return DoNothingSpan;
-  },
-  createContext(): unknown {
-    return undefined;
+  createSpan(): { span: TracingSpan; context: unknown } {
+    return { span: DoNothingSpan, context: undefined };
   },
   withContext<
     CallbackArgs extends unknown[],
@@ -186,13 +188,19 @@ class TracingClientImpl implements TracingClient {
       ? `${this._packagePrefix}.${operationName}`
       : operationName;
     const mergedOptions: TracingSpanOptions = {
-      ...options?.operationOptions?.tracingOptions,
       ...options?.spanOptions,
+      ...options?.operationOptions?.tracingOptions,
       name: spanName,
     };
 
-    const span = this._provider.createSpan(mergedOptions);
-    const providerContext = this._provider.createContext(span);
+    const { context: parentContext, ...spanOptions } = mergedOptions;
+
+    const createSpanOptions: TracingProviderCreateSpanOptions = {
+      context: parentContext ? getProviderContext(parentContext) : undefined,
+      ...spanOptions,
+    };
+
+    const { span, context: providerContext } = this._provider.createSpan(createSpanOptions);
 
     if (this._namespace) {
       span.setAttribute("az.namespace", this._namespace);
