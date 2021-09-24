@@ -15,8 +15,8 @@ export class ExampleClient {
   async someClientOperation(options?: OperationOptions): Promise<void> {
     await this._tracingClient.withWrappedSpan(
       "someClientOperation",
-      async () => {
-        await makeRequest({ url: "https://example.com/clientOperation", options });
+      async (updatedOptions) => {
+        await makeRequest({ url: "https://example.com/clientOperation", options: updatedOptions });
       },
       { operationOptions: options }
     );
