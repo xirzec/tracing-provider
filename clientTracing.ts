@@ -7,10 +7,12 @@ export async function doClientTracing(tracer: Tracer) {
   const rootContext = trace.setSpan(context.active(), span);
 
   const otProvider = createOpenTelemetryProvider();
+
+  // can also call setDefaultProvider from core-tracing to set globally
   const client = new ExampleClient({ tracingProvider: otProvider });
   await context.with(rootContext, async () => {
-    client.someClientOperation();
-    client.someOtherClientOperation();
+    await client.someClientOperation();
+    await client.someOtherClientOperation();
   });
   // pass parent manually
   const parentContext = fromProviderContext(rootContext);

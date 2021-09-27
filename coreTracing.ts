@@ -172,6 +172,12 @@ const DoNothingTracingProvider: TracingProvider = {
   },
 };
 
+let defaultProvider: TracingProvider = DoNothingTracingProvider;
+
+export function setDefaultTracingProvider(provider: TracingProvider) {
+  defaultProvider = provider;
+}
+
 class TracingClientImpl implements TracingClient {
   private _provider: TracingProvider;
   private _namespace: string;
@@ -180,7 +186,7 @@ class TracingClientImpl implements TracingClient {
   constructor(config: TracingClientConfig) {
     this._namespace = config.namespace;
     this._packagePrefix = config.packagePrefix;
-    this._provider = config.provider ?? DoNothingTracingProvider;
+    this._provider = config.provider ?? defaultProvider;
   }
 
   createSpan<T extends { tracingOptions?: OperationTracingOptions }>(
